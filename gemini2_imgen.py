@@ -8,10 +8,18 @@ required_open_webui_version: 0.5.3
 requirements: google-genai, google-generativeai, Pillow, pydantic
 """
 
+import base64
 from datetime import datetime
 
 # Open WebUI imports
+import os
+import requests
+from datetime import datetime
+from typing import Callable
+from fastapi import Request 
 from pydantic import BaseModel, Field
+from open_webui.routers.images import upload_image, load_b64_image_data
+from open_webui.models.users import Users
 
 # Google Gemini 2.0 Flash Experimental imports
 from google import genai
@@ -23,7 +31,7 @@ from io import BytesIO
 class Tools:
     """Container class for Open WebUI tools."""
 
-    class UserValves(BaseModel):
+    class Valves(BaseModel):
        """User-configurable settings for the tool."""
        api_key: str = Field(default="", description="Your Google AI API key here")
        # Check Gemini docs for models supporting multi-modal output if 2.0 flash is deprecated
@@ -40,7 +48,7 @@ class Tools:
 
     def __init__(self):
         """Initialize the Tool."""
-        self.user_valves = self.UserValves()
+        self.valves = self.Valves()
         # Ensure Pillow is installed for image processing
         try:
             from PIL import Image
@@ -48,7 +56,7 @@ class Tools:
             raise ImportError("Pillow library is required for image processing. Please install it: pip install Pillow")
 
     async def gemini_generate_image(
-        self, prompt: str, __event_emitter__=None
+        self, prompt: str, __request__: Request, __user__: dict, __event_emitter__=None
     ) -> str:
         """
         Generates an image based on a prompt using a Google AI model.
@@ -60,7 +68,7 @@ class Tools:
         :param __event_emitter__: (Internal) Used by Open WebUI to send updates/results to the UI.
         :return: A string message summarizing the operation's result for the LLM.
         """
-        if not self.user_valves.api_key:
+        if not self.valves.api_key:
              return "Error: API key is missing. Please configure it in the tool settings."
         
         await __event_emitter__(
@@ -72,15 +80,22 @@ class Tools:
 
         try:
             # https://ai.google.dev/gemini-api/docs/image-generation#gemini
-            client = genai.Client(api_key=self.user_valves.api_key)
+            client = genai.Client(api_key=self.valves.api_key)
 
             response = client.models.generate_content(
-                model=self.user_valves.model_name,
+                model=self.valves.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                 response_modalities=['Text', 'Image']
                 )
             )
+            data = {
+                "instances": {"prompt": prompt},
+                "parameters": {
+                    "sampleCount": 1,
+                    "outputOptions": {"mimeType": "image/png"},
+                },
+            }
 
             generated_text = None
             image = None
@@ -105,11 +120,13 @@ class Tools:
                     generated_text = None
                 
                 if part.inline_data is not None:
-                    # Get a datetime string to append to filename to make filenames unique
-                    now = datetime.now()
-                    now_str = now.strftime("%Y-%m-%d_%H-%M-%S-%f")
-                    filename = "Generated Image " + now_str
                     image = Image.open(BytesIO((part.inline_data.data)))
+                    buffered = BytesIO()
+                    image.save(buffered, format=self.valves.image_format)
+                    img_str = base64.b64encode(buffered.getvalue()).decode()
+                    image_data, content_type = load_b64_image_data(img_str)
+                    url = upload_image(__request__, data, image_data, content_type,  user=Users.get_user_by_id(__user__["id"]))
+
                     await __event_emitter__(
                         {
                             "type": "status",
@@ -119,7 +136,7 @@ class Tools:
                     await __event_emitter__(
                     {
                         "type": "message",
-                        "data": {"content": image.save(fp=filename, format=self.user_valves.image_format)},
+                        "data": {"content": f"![Generated Image]({url})"},
                     }
                 )
                 else:
