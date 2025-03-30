@@ -3,6 +3,7 @@ title: Google Gemini 2.0 Flash Experimental Image Generation
 author: Justin Miller
 author_url: https://github.com/millerjl1980
 funding_url: https://buymeacoffee.com/justinmillerdev
+git_url: https://github.com/millerjl1980/webui-toolkit-gemini-imagegen
 version: 0.1
 required_open_webui_version: 0.5.3
 requirements: google-genai, google-generativeai, Pillow
