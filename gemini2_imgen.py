@@ -5,17 +5,13 @@ author_url: https://github.com/millerjl1980
 funding_url: https://buymeacoffee.com/justinmillerdev
 version: 0.1
 required_open_webui_version: 0.5.3
-requirements: google-genai, google-generativeai, Pillow, pydantic
+requirements: google-genai, google-generativeai, Pillow
 """
 
 import base64
 from datetime import datetime
 
 # Open WebUI imports
-import os
-import requests
-from datetime import datetime
-from typing import Callable
 from fastapi import Request 
 from pydantic import BaseModel, Field
 from open_webui.routers.images import upload_image, load_b64_image_data
@@ -123,7 +119,9 @@ class Tools:
                     image = Image.open(BytesIO((part.inline_data.data)))
                     buffered = BytesIO()
                     image.save(buffered, format=self.valves.image_format)
-                    img_str = base64.b64encode(buffered.getvalue()).decode()
+                    mime_type = f"image/{self.valves.image_format.lower()}"
+                    header = f"{mime_type};base64,"
+                    img_str = header + base64.b64encode(buffered.getvalue()).decode()
                     image_data, content_type = load_b64_image_data(img_str)
                     url = upload_image(__request__, data, image_data, content_type,  user=Users.get_user_by_id(__user__["id"]))
 
