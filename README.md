@@ -1,7 +1,6 @@
 # Google Gemini 2.0 Flash Experimental Image Generation Toolkit for Open WebUI
 
 ![Version](https://img.shields.io/badge/version-0.1-blue)
-![Open WebUI Version](https://img.shields.io/badge/Open_WebUI-%3E%3D0.5.3-orange)
 
 **Author:** [Justin Miller](https://github.com/millerjl1980)
 **Support This Project:** [Buy Me A Coffee](https://buymeacoffee.com/justinmillerdev)
