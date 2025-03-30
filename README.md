@@ -57,7 +57,7 @@ Once installed and configured, you can invoke the tool within Open WebUI like an
 
 Example prompt:
 
-`@GeminiImageTool Generate an image of a futuristic cityscape at sunset`
+`Generate an image of a futuristic cityscape at sunset`
 
 The tool will:
 1.  Show a "Generating an image..." status message.
