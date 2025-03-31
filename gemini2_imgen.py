@@ -86,13 +86,6 @@ class Tools:
                 response_modalities=['Text', 'Image']
                 )
             )
-            data = {
-                "instances": {"prompt": prompt},
-                "parameters": {
-                    "sampleCount": 1,
-                    "outputOptions": {"mimeType": "image/png"},
-                },
-            }
 
             generated_text = None
             image = None
@@ -121,6 +114,13 @@ class Tools:
                     buffered = BytesIO()
                     image.save(buffered, format=self.valves.image_format)
                     mime_type = f"image/{self.valves.image_format.lower()}"
+                    data = {
+                        "instances": {"prompt": prompt},
+                        "parameters": {
+                            "sampleCount": 1,
+                            "outputOptions": {"mimeType": mime_type},
+                        },
+                    }
                     header = f"{mime_type};base64,"
                     img_str = header + base64.b64encode(buffered.getvalue()).decode()
                     image_data, content_type = load_b64_image_data(img_str)
