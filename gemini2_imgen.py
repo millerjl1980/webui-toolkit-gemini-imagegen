@@ -81,6 +81,9 @@ class Tools:
         )
 
         try:
+            if not isinstance(prompt, str):
+                raise TypeError("The prompt must be a string. Non-text inputs are not supported for this tool.")
+            
             # https://ai.google.dev/gemini-api/docs/image-generation#gemini
             client = genai.Client(api_key=self.valves.api_key)
 
