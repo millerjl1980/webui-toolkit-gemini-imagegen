@@ -21,7 +21,7 @@ contents = ('Hi, can you create a 3d rendered image of a pig '
             'futuristic scifi city with lots of greenery')
 
 response = client.models.generate_content(
-    model="gemini-2.0-flash-exp-image-generation",
+    model="gemini-2.0-flash-preview-image-generation",
     contents=contents,
     config=types.GenerateContentConfig(
       response_modalities=['Text', 'Image']

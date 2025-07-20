@@ -1,10 +1,10 @@
 """
-title: Google Gemini 2.0 Flash Experimental Image Generation
+title: Google Gemini 2.0 Flash Image Generation
 author: Justin Miller
 author_url: https://github.com/millerjl1980
 funding_url: https://buymeacoffee.com/justinmillerdev
 git_url: https://github.com/millerjl1980/webui-toolkit-gemini-imagegen
-version: 0.1
+version: 0.2
 required_open_webui_version: 0.5.3
 requirements: google-genai, google-generativeai, Pillow
 """
@@ -13,7 +13,7 @@ import base64
 from datetime import datetime
 
 # Open WebUI imports
-from fastapi import Request 
+from fastapi import Request
 from pydantic import BaseModel, Field
 from open_webui.routers.images import upload_image, load_b64_image_data
 from open_webui.models.users import Users
@@ -29,18 +29,19 @@ class Tools:
     """Container class for Open WebUI tools."""
 
     class Valves(BaseModel):
-       """User-configurable settings for the tool."""
-       api_key: str = Field(default="", description="Your Google AI API key here")
-       # Check Gemini docs for models supporting multi-modal output if 2.0 flash is deprecated
-       model_name: str = Field(
-           default="gemini-2.0-flash-exp-image-generation",
-           description="The specific Google AI model name for image generation"
-       )
-       # Supported Pillow formats for image
-       image_format: str = Field(
+        """User-configurable settings for the tool."""
+
+        api_key: str = Field(default="", description="Your Google AI API key here")
+        # Check Gemini docs for models supporting multi-modal output if 2.0 flash is deprecated
+        model_name: str = Field(
+            default="gemini-2.0-flash-preview-image-generation",
+            description="The specific Google AI model name for image generation",
+        )
+        # Supported Pillow formats for image
+        image_format: str = Field(
             default="png",
             description="The format of the generated image (PNG, GIF, JPEG)",
-            enum=["png", "gif", "jpeg"]
+            enum=["png", "gif", "jpeg"],
         )
 
     def __init__(self):
@@ -50,7 +51,9 @@ class Tools:
         try:
             from PIL import Image
         except ImportError:
-            raise ImportError("Pillow library is required for image processing. Please install it: pip install Pillow")
+            raise ImportError(
+                "Pillow library is required for image processing. Please install it: pip install Pillow"
+            )
 
     async def gemini_generate_image(
         self, prompt: str, __request__: Request, __user__: dict, __event_emitter__=None
@@ -66,8 +69,10 @@ class Tools:
         :return: A string message summarizing the operation's result for the LLM.
         """
         if not self.valves.api_key:
-             return "Error: API key is missing. Please configure it in the tool settings."
-        
+            return (
+                "Error: API key is missing. Please configure it in the tool settings."
+            )
+
         await __event_emitter__(
             {
                 "type": "status",
@@ -83,13 +88,13 @@ class Tools:
                 model=self.valves.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                response_modalities=['Text', 'Image']
-                )
+                    response_modalities=["Text", "Image"]
+                ),
             )
 
             generated_text = None
             image = None
-            
+
             for part in response.candidates[0].content.parts:
                 # In case multiple parts, emit both text and image once it is received
                 if part.text:
@@ -97,7 +102,10 @@ class Tools:
                     await __event_emitter__(
                         {
                             "type": "status",
-                            "data": {"description": "Received text with image:.", "done": False},
+                            "data": {
+                                "description": "Received text with image:.",
+                                "done": False,
+                            },
                         }
                     )
                     await __event_emitter__(
@@ -108,11 +116,14 @@ class Tools:
                     )
                 else:
                     generated_text = None
-                
+
                 if part.inline_data is not None:
                     image = Image.open(BytesIO((part.inline_data.data)))
-                    buffered = BytesIO()
-                    image.save(buffered, format=self.valves.image_format)
+                    buffered_output = BytesIO()
+                    image.save(buffered_output, format=self.valves.image_format.lower())
+                    image_bytes = buffered_output.getvalue()
+                    b64_encoded_bytes = base64.b64encode(image_bytes)
+                    b64_string = b64_encoded_bytes.decode("utf-8")
                     mime_type = f"image/{self.valves.image_format.lower()}"
                     data = {
                         "instances": {"prompt": prompt},
@@ -122,9 +133,15 @@ class Tools:
                         },
                     }
                     header = f"{mime_type};base64,"
-                    img_str = header + base64.b64encode(buffered.getvalue()).decode()
+                    img_str = f"data:{mime_type};base64,{b64_string}"
                     image_data, content_type = load_b64_image_data(img_str)
-                    url = upload_image(__request__, data, image_data, content_type,  user=Users.get_user_by_id(__user__["id"]))
+                    url = upload_image(
+                        __request__,
+                        metadata=data,
+                        image_data=image_data,
+                        content_type=content_type,
+                        user=Users.get_user_by_id(__user__["id"]),
+                    )
 
                     await __event_emitter__(
                         {
@@ -133,11 +150,11 @@ class Tools:
                         }
                     )
                     await __event_emitter__(
-                    {
-                        "type": "message",
-                        "data": {"content": f"![Generated Image]({url})"},
-                    }
-                )
+                        {
+                            "type": "message",
+                            "data": {"content": f"![Generated Image]({url})"},
+                        }
+                    )
                 else:
                     image = None
 
