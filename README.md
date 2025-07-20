@@ -1,19 +1,21 @@
-# Google Gemini 2.0 Flash Experimental Image Generation Toolkit for Open WebUI
+# Google Gemini 2.0 Flash Image Generation Toolkit for Open WebUI
 
-![Version](https://img.shields.io/badge/version-0.1-blue)
+![Version](https://img.shields.io/badge/version-0.2-blue)
 
 **Author:** [Justin Miller](https://github.com/millerjl1980)
 **Support This Project:** [Buy Me A Coffee](https://buymeacoffee.com/justinmillerdev)
 
 ---
+## Update - 7/20/25
+Gemini updated the Flash image generation from "Experimental" to "Preview."
 
 ## Overview
 
-This toolkit integrates Google's powerful (and experimental) `gemini-2.0-flash-exp-image-generation` model directly into Open WebUI, allowing you to generate images based on text prompts within your chat interface.
+This toolkit integrates Google's powerful (and experimental) `gemini-2.0-flash-preview-image-generation` model directly into Open WebUI, allowing you to generate images based on text prompts within your chat interface.
 
 Leveraging the Gemini API, this tool can generate images and potentially accompanying text in response to your prompts. The results (both image and text, if generated) are displayed directly in the Open WebUI chat.
 
-**Note:** This tool utilizes the `gemini-2.0-flash-exp-image-generation` model, which is currently experimental [0, 1]. Google documentation notes that for this specific model, the response modalities must include both "Text" and "Image" [1]. This toolkit handles that configuration automatically.
+**Note:** This tool utilizes the `gemini-2.0-flash-preview-image-generation` model, which is currently experimental [0, 1]. Google documentation notes that for this specific model, the response modalities must include both "Text" and "Image" [1]. This toolkit handles that configuration automatically.
 
 ## Features
 
@@ -68,7 +70,7 @@ The tool will:
 
 ## Important Notes
 
-*   **Experimental Model:** The `gemini-2.0-flash-exp-image-generation` model is explicitly marked as experimental by Google. Its availability or behavior may change.
+*   **Experimental Model:** The `gemini-2.0-flash-preview-image-generation` model is explicitly marked as experimental by Google. Its availability or behavior may change.
 *   **API Key:** Keep your Google AI API key secure. Do not share it publicly.
 *   **Safety Settings:** The underlying Google API may have safety filters that prevent generation for certain prompts. The tool will attempt to relay any error messages back to the user.
 
